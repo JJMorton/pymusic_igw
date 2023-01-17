@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
+from os import path
 
 from tomso import fgong
 
@@ -19,8 +19,6 @@ class LuminosityTotal(AnalysisTask):
         super().__init__("luminosity_total")
 
     def compute(self):
-        # The 1D model in FGONG format
-        FILENAME_GYRE = "fort11.gong.z2m20_krad_mesa_AS1d12_mod1420"
 
         # Setup simulation from dump files
         radii = np.array(self.sim_data.labels_along_axis("x1"))
@@ -57,7 +55,14 @@ class LuminosityTotal(AnalysisTask):
             spect = PS.take(freqs[ff - 1 : ff + 2], "freq").mean("freq").array()
             PSD_norm.append(spect)
 
-        # load data from 1D profile (FGONG format)
+
+        return times, selected_freq, radii, PSD_norm
+
+    def plot(self, result):
+        (times, selected_freq, radii, PSD_norm) = result
+
+        # Load data from 1D profile
+        FILENAME_GYRE = path.join(self.base_dir, "fort11.gong.z2m20_krad_mesa_AS1d12_mod1420")
         print("load data from 1D profile (FGONG format)")
         profile_fgong = fgong.load_fgong(FILENAME_GYRE)
         r_fgong = np.flip(profile_fgong.r)
@@ -69,6 +74,7 @@ class LuminosityTotal(AnalysisTask):
         rho = np.interp(radii, r_fgong, rho_fgong)
         kh = np.interp(radii, r_fgong, kh_fgong)
 
+        # Calculate wave luminosity
         wave_lum = (
             4
             * np.pi
@@ -77,10 +83,6 @@ class LuminosityTotal(AnalysisTask):
             / (2 * kh[np.newaxis, :])
         )
 
-        return times, selected_freq, radii, wave_lum, BVF
-
-    def plot(self, result):
-        (times, selected_freq, radii, wave_lum, BVF) = result
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.set_title(r"t={:.3E} to {:.3E}".format(times[0], times[-1]))
