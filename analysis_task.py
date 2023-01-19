@@ -206,29 +206,3 @@ class AnalysisTask(ABC):
 		logger.info(f"Saving plot to '{plot_file_path}'")
 		figure.savefig(plot_file_path)
 		logger.info("Saved!")
-
-
-# def read_music(VERBOSE:bool = False) -> Tuple[List[str], MusicSim, BigArray, SphericalMidpointQuad1D]:
-# 	'''
-# 	Read music dumps (filenames given as command line arguments) into a `BigArray`
-# 	'''
-# 	if len(sys.argv) < 2:
-# 		print(f"Syntax: {sys.argv[0]} <dump files>")
-# 		exit(1)
-
-# 	print("=====================================")
-# 	print("Reading dump files...")
-# 	dump_files = sys.argv[1:]
-# 	dump_info = MusicDumpInfo(num_scalars=0, num_space_dims=2, num_velocities=2)
-
-# 	# Setup simulation from dump files
-# 	dump_files = sorted(dump_files)
-# 	sim = MusicSim.from_dump_file_names(dump_files, dump_info, params.boundary_conds)
-# 	sim_data = sim.big_array(verbose=VERBOSE)
-# 	quad = SphericalMidpointQuad1D(sim.point_grid(axis=1))
-# 	print("Done!")
-# 	print("sim_data:", sim_data)
-# 	print("Fields available under the 'var' axis:", sim_data.labels_along_axis("var"))
-# 	print("=====================================")
-
-# 	return dump_files, sim, sim_data, quad
