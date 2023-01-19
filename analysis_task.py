@@ -155,7 +155,7 @@ class AnalysisTask(ABC):
 		logger.info("===== Running analysis task =====")
 
 		# Setup simulation from dump files
-		logger.info("Reading dump files...")
+		logger.info(f"Reading {len(dump_files)} dump files...")
 		self.dump_info = MusicDumpInfo(num_scalars=0, num_space_dims=2, num_velocities=2)
 		self.dump_files = sorted(dump_files)
 		self.sim = MusicSim.from_dump_file_names(dump_files, self.dump_info, self.params.boundary_conds)

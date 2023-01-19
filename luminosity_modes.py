@@ -84,7 +84,7 @@ def compute_PS(
         [
             # PS.xs(ell, "ell").take([freqs[i - 1], freqs[i], freqs[i + 1]], "freq").mean("freq").array()
             # for i, ell in zip(adjusted_freq_idx, mode_ells)
-            PS.xs(ell, "ell").xs(f, "freq").array()
+            PS.slabbed("x1", 256).xs(ell, "ell").xs(f, "freq").array()
             for f, ell in zip(adjusted_freq, mode_ells)
         ]
     )
@@ -133,10 +133,10 @@ class LuminosityModes(AnalysisTask):
         modes: List[Tuple[int, float]] = [
             # UNNO outer BC
             # (Angular order ell, frequency omega)
-            (2, 3.804e-6),
-            (3, 7.301e-6),
-            (4, 9.369e-6),
-            (7, 19.596e-6),
+            # (2, 3.804e-6),
+            # (3, 7.301e-6),
+            # (4, 9.369e-6),
+            # (7, 19.596e-6),
 
             # DZIEM outer BC
             # (Angular order ell, frequency omega)
@@ -144,6 +144,13 @@ class LuminosityModes(AnalysisTask):
             # (3, 7.750e-6),
             # (4, 9.936e-6),
             # (7, 18.286e-6),
+
+            # GAMMA outer BC
+            # (Angular order ell, frequency omega)
+            (2, 3.816430447442817e-6),
+            (3, 7.348460794932171e-6),
+            (4, 9.438993003628058e-6),
+            (7, 15.44425232235460e-6),
         ]
         selected_ell = np.array([m[0] for m in modes])
         selected_freq = np.array([m[1] for m in modes])
