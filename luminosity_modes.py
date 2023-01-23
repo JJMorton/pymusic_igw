@@ -176,7 +176,7 @@ class LuminosityModes(AnalysisTask):
 
         # Read displacements from GYRE
         logger.info("Reading GYRE detail files")
-        xi = [ get_gyre_displacement(radii / self.params.radius, path.join(self.base_dir, "gyre_detail/"), ell, freq * 1e6)[2] for ell, freq in modes ]
+        xi = [ get_gyre_displacement(radii / self.params.radius, path.join(self.base_dir, "gyre_detail/"), ell, freq * 1e6)[0] for ell, freq in modes ]
 
         # Load data from 1D profile
         filename_fgong = path.join(self.base_dir, "fort11.gong.z2m20_krad_mesa_AS1d12_mod1420")
@@ -226,8 +226,8 @@ class LuminosityModes(AnalysisTask):
 
             # Plot |xi| from GYRE
             ax_twin = ax.twinx()
-            ax_twin.plot(radii, xi[i], c="grey", lw=1, alpha=0.8)
-            ax_twin.set_ylabel(r"$|\xi|$ from GYRE")
+            ax_twin.plot(radii, xi[i]**2, c="grey", lw=1, alpha=0.8)
+            ax_twin.set_ylabel(r"$\xi_r^2$ from GYRE")
             ax_twin.set_yticks([])
             ax_twin.set_yticklabels([])
             ax_twin.set_yscale("log")
