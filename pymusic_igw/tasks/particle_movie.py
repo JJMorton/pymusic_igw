@@ -10,7 +10,7 @@ import pymusic.particles as pmp
 from pymusic.plotting import FixedBounds, PlotOnSameAxes, SinglePlotFigure, FfmpegMp4Movie
 from pymusic.particles.plotting import Spherical2DParticlesPlot, Spherical2DDomainBounds
 
-from .. import AnalysisTask, Spherical2DArrayPlot
+from pymusic_igw import AnalysisTask, Spherical2DArrayPlot
 
 
 # Set up logging
