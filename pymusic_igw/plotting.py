@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 @dataclass(frozen=True)
 class Spherical2DArrayPlot(Plot):
     
@@ -28,4 +29,14 @@ class Spherical2DArrayPlot(Plot):
         ax.set_yticks([])
         ax.set_aspect("equal")
         if self.with_colorbar:
-            ax.figure.colorbar(mesh, ax=ax)
+            im_ratio = arr.shape[0]/arr.shape[1]
+            ax.figure.colorbar(mesh, ax=ax, fraction=0.046*im_ratio, pad=0.04)
+
+
+@dataclass(frozen=True)
+class SymmetricFixedBounds:
+    vrange: float
+    center: float = 0.0
+
+    def __call__(self, values: np.ndarray) -> Tuple[float, float]:
+        return (self.center - self.vrange, self.center + self.vrange)

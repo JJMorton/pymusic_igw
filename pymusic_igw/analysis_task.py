@@ -8,6 +8,7 @@ import logging
 from abc import ABC, abstractmethod
 import json
 from numpy import float64
+from numpy.typing import NDArray
 from dataclasses import dataclass
 
 from pymusic.big_array import BigArray
@@ -31,7 +32,7 @@ class Params():
 	tau_conv: float64 # The convective timescale
 
 	@classmethod
-	def fromJSON(cls, filename):
+	def fromJSON(cls, filename: Path):
 		parse_bc = lambda bc: ReflectiveArrayBC() if bc == "r" else PeriodicArrayBC()
 		try:
 			with open(filename, "r") as f:
@@ -45,11 +46,11 @@ class Params():
 					tau_conv = data["tau_conv"],
 				)
 		except FileNotFoundError:
-			logger.error("Missing 'params.json'")
-			exit(1)
+			logger.error("Missing " + filename.as_posix())
+			return None
 		except KeyError:
-			logger.error("Missing key in 'params.json'")
-			exit(1)
+			logger.error("Missing key in " + filename.as_posix())
+			return None
 
 		Rsun = 6.957e8
 		Msun = 1.98847e30
@@ -85,7 +86,6 @@ class AnalysisTask(ABC):
 
 	def __init__(self, name: str, plot_ext: str = "png"):
 		self.name = name
-		self.params = Params.fromJSON("./params.json")
 		self.plot_ext = plot_ext
 
 
@@ -100,10 +100,11 @@ class AnalysisTask(ABC):
 
 
 	def run(self):
+
 		'''
 		Parse command-line arguments and run `compute()` and/or `plot()` as requested
 		'''
-		parser = argparse.ArgumentParser(prog=self.name)
+		parser = argparse.ArgumentParser()
 		parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
 		parser.add_argument("--clean", action="store_true", help="clean old .pkl files")
 		parser.add_argument("-l", "--location", default="./", metavar="<dir>", help="the directory containing the 1D model, gyre output, etc.")
@@ -114,6 +115,13 @@ class AnalysisTask(ABC):
 		self.verbose = args.verbose
 
 		self.base_dir = args.location
+
+		p = Params.fromJSON(Path(self.base_dir, "params.json"))
+		if p is None:
+			logger.info("Specify the directory containing the correct params.json with -l (see --help for info)")
+			return
+		else:
+			self.params = p
 
 		if args.compute:
 			self._run_compute(args.compute)
@@ -130,9 +138,16 @@ class AnalysisTask(ABC):
 			parser.print_help()
 
 
+	def is_in_convective_zone(self, radii) -> NDArray[bool]:
+		if self.params.core_conv:
+			return radii < self.params.boundary_conv
+		else:
+			return radii > self.params.boundary_conv
+
+
 	def _get_result_path(self) -> Path:
-		name = self.name + "_" + os.path.dirname(self.base_dir)
-		dir_path = f"output"
+		name = self.name
+		dir_path = Path(self.base_dir, "output")
 
 		# Make the output directory, if it doesn't already exist
 		Path(dir_path).mkdir(parents=True, exist_ok=True)
@@ -141,8 +156,8 @@ class AnalysisTask(ABC):
 
 
 	def _get_plot_path(self) -> Path:
-		name = self.name + "_" + os.path.dirname(self.base_dir)
-		dir_path = f"plots"
+		name = self.name
+		dir_path = Path(self.base_dir, "plots")
 
 		# Make the output directory, if it doesn't already exist
 		Path(dir_path).mkdir(parents=True, exist_ok=True)
@@ -204,7 +219,10 @@ class AnalysisTask(ABC):
 		with open(file_path, "rb") as f:
 			result = pickle.load(f)
 		figure = self.plot(result)
-		plot_file_path = self._get_plot_path()
-		logger.info(f"Saving plot to '{plot_file_path}'")
-		figure.savefig(plot_file_path)
-		logger.info("Saved!")
+		if figure is not None:
+			plot_file_path = self._get_plot_path()
+			logger.info(f"Saving plot to '{plot_file_path}'")
+			figure.savefig(plot_file_path)
+			logger.info("Saved!")
+		else:
+			logger.warning("No plot returned from analysis task")
