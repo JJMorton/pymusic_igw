@@ -8,6 +8,7 @@ import logging
 from abc import ABC, abstractmethod
 import json
 from numpy import float64
+from dataclasses import dataclass
 
 from pymusic.big_array import BigArray
 from pymusic.io.music import ArrayBC, MusicSim
@@ -19,6 +20,7 @@ from pymusic.io.music import ReflectiveArrayBC, PeriodicArrayBC
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
+@dataclass(frozen=True)
 class Params():
 
 	radius: float64 # Stellar radius
@@ -26,10 +28,7 @@ class Params():
 	boundary_conv: float64 # Radius of the convective-radiative interface
 	core_conv: bool # Is the core convective?
 	boundary_conds: Tuple[ArrayBC, ArrayBC] # The boundary conditions for r and theta
-	tau_conv = float64 # The convective timescale
-
-	def __init__(self):
-		pass
+	tau_conv: float64 # The convective timescale
 
 	@classmethod
 	def fromJSON(cls, filename):
@@ -37,13 +36,14 @@ class Params():
 		try:
 			with open(filename, "r") as f:
 				data = json.load(f)
-			p = Params()
-			p.radius = data["radius"]
-			p.mass = data["mass"]
-			p.boundary_conv = data["boundary_conv"] * data["radius"]
-			p.core_conv = data["core_conv"]
-			p.boundary_conds = tuple(parse_bc(bc) for bc in (data["boundary_r"], data["boundary_theta"]))
-			p.tau_conv = data["tau_conv"]
+				p = Params(
+					radius = data["radius"],
+					mass = data["mass"],
+					boundary_conv = data["boundary_conv"] * data["radius"],
+					core_conv = data["core_conv"],
+					boundary_conds = tuple(parse_bc(bc) for bc in (data["boundary_r"], data["boundary_theta"])),
+					tau_conv = data["tau_conv"],
+				)
 		except FileNotFoundError:
 			logger.error("Missing 'params.json'")
 			exit(1)
@@ -73,6 +73,7 @@ class AnalysisTask(ABC):
 	'''
 
 	name: str
+	plot_ext: str
 	verbose: bool = False
 	dump_files: List[str] = []
 	sim: MusicSim
@@ -82,9 +83,10 @@ class AnalysisTask(ABC):
 	base_dir: str = "./"
 
 
-	def __init__(self, name: str):
+	def __init__(self, name: str, plot_ext: str = "png"):
 		self.name = name
 		self.params = Params.fromJSON("./params.json")
+		self.plot_ext = plot_ext
 
 
 	@abstractmethod
@@ -129,7 +131,7 @@ class AnalysisTask(ABC):
 
 
 	def _get_result_path(self) -> Path:
-		name = self.name
+		name = self.name + "_" + os.path.dirname(self.base_dir)
 		dir_path = f"output"
 
 		# Make the output directory, if it doesn't already exist
@@ -139,13 +141,13 @@ class AnalysisTask(ABC):
 
 
 	def _get_plot_path(self) -> Path:
-		name = self.name
+		name = self.name + "_" + os.path.dirname(self.base_dir)
 		dir_path = f"plots"
 
 		# Make the output directory, if it doesn't already exist
 		Path(dir_path).mkdir(parents=True, exist_ok=True)
 
-		return Path(os.path.join(dir_path, f'{name}.png'))
+		return Path(os.path.join(dir_path, name + '.' + self.plot_ext))
 
 
 	def _run_compute(self, dump_files: List[str]):
