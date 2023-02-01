@@ -46,8 +46,8 @@ class Params():
 					core_conv = data["core_conv"],
 					boundary_conds = tuple(parse_bc(bc) for bc in (data["boundary_r"], data["boundary_theta"])),
 					tau_conv = data["tau_conv"],
-					l_max_heatflux = data["l_max_heatflux"],
-					l_max_ekinflux = data["l_max_ekinflux"],
+					l_max_heatflux = data["l_max_heatflux"] * data["radius"],
+					l_max_ekinflux = data["l_max_ekinflux"] * data["radius"],
 				)
 		except FileNotFoundError:
 			logger.error("Missing " + filename.as_posix())

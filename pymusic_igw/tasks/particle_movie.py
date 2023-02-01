@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 # The hydro field to plot
 FIELD:str = "vel_1"
 # The number of particle dumps to animate, set to zero to use all dumps
-NUM_PARTICLE_DUMPS:int = 40
+NUM_PARTICLE_DUMPS:int = 200
 # The limits of the domain in r (stellar radii), use (None, None) for entire domain
-DOMAIN_R:Tuple[float, float] = (0.23, 0.33)
+# DOMAIN_R:Tuple[float, float] = (0.23, 0.33)
+DOMAIN_R:Tuple[float, float] = (None, None)
 # The limits of the domain in theta, use (None, None) for entire domain
-DOMAIN_THETA:Tuple[float, float] = (np.pi*0.4, np.pi*0.6)
+# DOMAIN_THETA:Tuple[float, float] = (np.pi*0.4, np.pi*0.6)
+DOMAIN_THETA:Tuple[float, float] = (None, None)
 
 # If True, set the colorbar range to that of only the radiative zone
 SATURATE_CONV:bool = True
@@ -61,7 +63,7 @@ class ParticleMovie(AnalysisTask):
         logger.info(f"Read MUSIC dumps: {vels}")
         radii = np.array(self.sim_data.labels_along_axis("x1"))
         thetas = np.array(self.sim_data.labels_along_axis("x2"))
-        r_bounds = ((DOMAIN_R[0] * self.params.radius) or radii[0], (DOMAIN_R[1] * self.params.radius) or radii[-1])
+        r_bounds = ((DOMAIN_R[0] or (radii[0] / self.params.radius)) * self.params.radius, (DOMAIN_R[1] or (radii[-1] / self.params.radius)) * self.params.radius)
         theta_bounds = (DOMAIN_THETA[0] or thetas[0], DOMAIN_THETA[1] or thetas[-1])
 
         def get_visible_gids(part_dump):
@@ -161,6 +163,9 @@ class ParticleMovie(AnalysisTask):
                     ),
                     Spherical2DDomainBounds( # The convective-radiative boundary
                         r_bounds=(r_bounds[0], self.params.boundary_conv), theta_bounds=theta_bounds
+                    ),
+                    Spherical2DDomainBounds( # The convective-radiative boundary
+                        r_bounds=(r_bounds[0], self.params.boundary_conv + self.params.l_max_heatflux), theta_bounds=theta_bounds
                     ),
                     Spherical2DParticlesPlot( # particles in the radiative region
                         pmp.DumpFilteredByGids(
