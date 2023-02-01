@@ -30,6 +30,8 @@ class Params():
 	core_conv: bool # Is the core convective?
 	boundary_conds: Tuple[ArrayBC, ArrayBC] # The boundary conditions for r and theta
 	tau_conv: float64 # The convective timescale
+	l_max_heatflux: float64
+	l_max_ekinflux: float64
 
 	@classmethod
 	def fromJSON(cls, filename: Path):
@@ -44,6 +46,8 @@ class Params():
 					core_conv = data["core_conv"],
 					boundary_conds = tuple(parse_bc(bc) for bc in (data["boundary_r"], data["boundary_theta"])),
 					tau_conv = data["tau_conv"],
+					l_max_heatflux = data["l_max_heatflux"],
+					l_max_ekinflux = data["l_max_ekinflux"],
 				)
 		except FileNotFoundError:
 			logger.error("Missing " + filename.as_posix())

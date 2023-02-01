@@ -84,6 +84,7 @@ class ParticleMovie(AnalysisTask):
             return
         files = sorted(dumps_dir.glob("*.tracers.h5"))
         dumps = [pmp.ParticleDumpFromFile(f) for f in files]
+        global NUM_PARTICLE_DUMPS
         NUM_PARTICLE_DUMPS = NUM_PARTICLE_DUMPS or len(dumps)
 
         # Collect together MUSIC and particle dumps
@@ -121,7 +122,11 @@ class ParticleMovie(AnalysisTask):
             last_df = hydro_and_particle_data[-1][2].dataframe()
             end_radii = np.array(last_df["x1"])
             filter_rad_end = ~self.is_in_convective_zone(end_radii)
-            particle_gids = first_df[np.logical_and.reduce((filter_conv, filter_rad_end))].index
+            filter_overshoot_end = ~np.logical_or.reduce(( # Filter for particles that are not in the overshoot region
+                self.is_in_convective_zone(end_radii - self.params.l_max_heatflux),
+                self.is_in_convective_zone(end_radii + self.params.l_max_heatflux)
+            ))
+            particle_gids = first_df[np.logical_and.reduce((filter_conv, filter_rad_end, filter_overshoot_end))].index
             particle_colors = np.array(["black"] * len(particle_gids))
             logger.info(f"Selected {len(particle_gids)} particles")
         else:
@@ -161,7 +166,8 @@ class ParticleMovie(AnalysisTask):
                         pmp.DumpFilteredByGids(
                             particles, gids=np.intersect1d(particle_gids, get_visible_gids(particles))
                         ),
-                        color=lambda _: particle_colors,
+                        # TODO: Implement particle colours
+                        color=lambda _: "black",
                         scale=lambda _: 3.0,
                     ),
                     Spherical2DArrayPlot( # The hydro field
