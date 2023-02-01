@@ -157,18 +157,11 @@ class ParticleMovie(AnalysisTask):
                     Spherical2DDomainBounds( # The convective-radiative boundary
                         r_bounds=(r_bounds[0], self.params.boundary_conv), theta_bounds=theta_bounds
                     ),
-                    Spherical2DParticlesPlot( # particles in the convective region
-                        pmp.DumpFilteredByGids(
-                            particles, gids=np.intersect1d(gids_conv, get_visible_gids(particles))
-                        ),
-                        color=lambda _: "black",
-                        scale=lambda _: 2.0,
-                    ),
                     Spherical2DParticlesPlot( # particles in the radiative region
                         pmp.DumpFilteredByGids(
-                            particles, gids=np.intersect1d(gids_rad, get_visible_gids(particles))
+                            particles, gids=np.intersect1d(particle_gids, get_visible_gids(particles))
                         ),
-                        color=lambda _: "lime",
+                        color=lambda _: particle_colors,
                         scale=lambda _: 3.0,
                     ),
                     Spherical2DArrayPlot( # The hydro field
