@@ -3,6 +3,7 @@
 import numpy as np
 import logging
 import itertools
+from typing import Tuple
 
 import numpy as np
 from pathlib import Path
@@ -17,14 +18,33 @@ from pymusic_igw import AnalysisTask, Spherical2DArrayPlot, SymmetricFixedBounds
 # Set up logging
 logger = logging.getLogger(__name__)
 
-FIELD = "vel_1" # The hydro field to plot
-NUM_PARTICLE_DUMPS = 40 # The number of particle dumps to animate, set to zero to use all dumps
-DOMAIN_R = (0.23, 0.33) # The limits of the domain in r (stellar radii), use (None, None) for entire domain
-DOMAIN_THETA = (np.pi*0.4, np.pi*0.6) # The limits of the domain in theta, use (None, None) for entire domain
-SATURATE_CONV = True # If True, set the colorbar range to that of only the radiative zone
-SATURATE_OVERSHOOT_EXCLUDE = 0.05 # If SATURATE_CONV, exclude this many stellar radii outside the convective zone when calculating the colour scale
-THETA_EPSILON = np.radians(0.1) # Allowed variation in theta (radians) for particles along the spokes
-SPOKE_SPACING = np.pi / 20 # Angular spacing between spokes of highlighted particles
+
+# CONFIGURATION OPTIONS
+# -------------------------------------------------------
+# The hydro field to plot
+FIELD:str = "vel_1"
+# The number of particle dumps to animate, set to zero to use all dumps
+NUM_PARTICLE_DUMPS:int = 40
+# The limits of the domain in r (stellar radii), use (None, None) for entire domain
+DOMAIN_R:Tuple[float, float] = (0.23, 0.33)
+# The limits of the domain in theta, use (None, None) for entire domain
+DOMAIN_THETA:Tuple[float, float] = (np.pi*0.4, np.pi*0.6)
+
+# If True, set the colorbar range to that of only the radiative zone
+SATURATE_CONV:bool = True
+# If SATURATE_CONV, exclude this many stellar radii outside the convective zone when calculating the colour scale
+SATURATE_OVERSHOOT_EXCLUDE:float = 0.05
+
+# The configuration of particles to animate
+PARTICLE_SELECTION:str = ["spokes", "penetrating"][1]
+
+# For PARTICLE_SELECTION == "spokes"
+# Allowed variation in theta (radians) for particles along the spokes
+THETA_EPSILON:float = np.radians(0.1)
+# Angular spacing between spokes of highlighted particles
+SPOKE_SPACING:float = np.pi / 20
+# -------------------------------------------------------
+
 
 class ParticleMovie(AnalysisTask):
 
@@ -80,14 +100,33 @@ class ParticleMovie(AnalysisTask):
         init_radii = np.array(first_df["x1"])
         init_thetas = np.array(first_df["x2"])
 
-        # Get the GIDs of the particles along the spokes
-        theta_range = theta_bounds[1] - theta_bounds[0]
-        filter_spokes = np.fmod(init_thetas, SPOKE_SPACING) < THETA_EPSILON # bool array to filter particles along spokes
-        filter_conv = self.is_in_convective_zone(init_radii) # bool array to filter particles in the convective zone
-        gids_conv = first_df[np.logical_and.reduce((filter_spokes, filter_conv))].index # GIDs of the particles in the convective zone
-        gids_rad = first_df[np.logical_and.reduce((filter_spokes, ~filter_conv))].index # GIDs of the particles in the radiative zone
-        logger.info(f"Chosen {len(gids_conv)} particles in convective zone")
-        logger.info(f"Chosen {len(gids_rad)} particles in radiative zone")
+        # Select the particles we are interested in
+        particle_gids = np.array([]) # List of particle GIDs to animate
+        particle_colors = np.array([]) # The colours to give them
+        if PARTICLE_SELECTION == "spokes":
+            # Get the GIDs of the particles along radial lines
+            logger.info("Selecting particles in spokes...")
+            filter_spokes = np.fmod(init_thetas, SPOKE_SPACING) < THETA_EPSILON # bool array to filter particles along spokes
+            filter_conv = self.is_in_convective_zone(init_radii) # bool array to filter particles in the convective zone
+            gids_conv = first_df[np.logical_and.reduce((filter_spokes, filter_conv))].index # GIDs of the particles in the convective zone
+            gids_rad = first_df[np.logical_and.reduce((filter_spokes, ~filter_conv))].index # GIDs of the particles in the radiative zone
+            logger.info(f"Selected {len(gids_conv)} particles in convective zone")
+            logger.info(f"Selected {len(gids_rad)} particles in radiative zone")
+            particle_colors = np.array(["black"] * len(gids_conv) + ["lime"] * len(gids_rad))
+            particle_gids = np.concatenate(gids_conv, gids_rad)
+        elif PARTICLE_SELECTION == "penetrating":
+            # Get the GIDs of particles that penetrate the convective-radiative interface
+            logger.info("Selecting particles which penetrate the boundary...")
+            filter_conv = self.is_in_convective_zone(init_radii) # bool array to filter particles in the convective zone
+            last_df = hydro_and_particle_data[-1][2].dataframe()
+            end_radii = np.array(last_df["x1"])
+            filter_rad_end = ~self.is_in_convective_zone(end_radii)
+            particle_gids = first_df[np.logical_and.reduce((filter_conv, filter_rad_end))].index
+            particle_colors = np.array(["black"] * len(particle_gids))
+            logger.info(f"Selected {len(particle_gids)} particles")
+        else:
+            logger.error(f"Invalid value for PARTICLE_SELECTION, '{PARTICLE_SELECTION}', exiting...")
+            exit(1)
 
         # Compute the colorbar range
         if SATURATE_CONV:
@@ -160,3 +199,4 @@ class ParticleMovie(AnalysisTask):
 
 if __name__ == "__main__":
     ParticleMovie().run()
+
