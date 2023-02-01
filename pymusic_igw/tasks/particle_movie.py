@@ -18,12 +18,13 @@ from pymusic_igw import AnalysisTask, Spherical2DArrayPlot, SymmetricFixedBounds
 logger = logging.getLogger(__name__)
 
 FIELD = "vel_1" # The hydro field to plot
-NUM_PARTICLE_DUMPS = 120 # The number of particle dumps to animate
+NUM_PARTICLE_DUMPS = 40 # The number of particle dumps to animate, set to zero to use all dumps
+DOMAIN_R = (0.23, 0.33) # The limits of the domain in r (stellar radii), use (None, None) for entire domain
+DOMAIN_THETA = (np.pi*0.4, np.pi*0.6) # The limits of the domain in theta, use (None, None) for entire domain
 SATURATE_CONV = True # If True, set the colorbar range to that of only the radiative zone
 SATURATE_OVERSHOOT_EXCLUDE = 0.05 # If SATURATE_CONV, exclude this many stellar radii outside the convective zone when calculating the colour scale
 THETA_EPSILON = np.radians(0.1) # Allowed variation in theta (radians) for particles along the spokes
-SPOKE_SPACING = np.pi / 16 # Angular spacing between spokes of highlighted particles
-NUM_PARTICLES_IN_SPOKE = 100 # Number of particles in each spoke
+SPOKE_SPACING = np.pi / 20 # Angular spacing between spokes of highlighted particles
 
 class ParticleMovie(AnalysisTask):
 
@@ -37,9 +38,24 @@ class ParticleMovie(AnalysisTask):
         else:
             vels = self.sim_data.xs(FIELD, "var")
         vels = CachedArray(vels)
-        logger.info(f"Read velocities: {vels}")
+        logger.info(f"Read MUSIC dumps: {vels}")
         radii = np.array(self.sim_data.labels_along_axis("x1"))
         thetas = np.array(self.sim_data.labels_along_axis("x2"))
+        r_bounds = ((DOMAIN_R[0] * self.params.radius) or radii[0], (DOMAIN_R[1] * self.params.radius) or radii[-1])
+        theta_bounds = (DOMAIN_THETA[0] or thetas[0], DOMAIN_THETA[1] or thetas[-1])
+
+        def get_visible_gids(part_dump):
+            df = part_dump.dataframe()
+            part_radii = np.array(df["x1"])
+            part_thetas = np.array(df["x2"])
+            filter_domain = np.logical_and.reduce((
+                part_radii > r_bounds[0],
+                part_radii < r_bounds[1],
+                part_thetas > theta_bounds[0],
+                part_thetas < theta_bounds[1]
+            ))
+            gids = df[filter_domain].index # GIDs of the particles within the domain
+            return gids
 
         # Get all tracer files in dump directory
         dumps_dir = Path(self.base_dir, "particle_dumps/")
@@ -48,8 +64,7 @@ class ParticleMovie(AnalysisTask):
             return
         files = sorted(dumps_dir.glob("*.tracers.h5"))
         dumps = [pmp.ParticleDumpFromFile(f) for f in files]
-        r_bounds = (radii[0], radii[-1])
-        theta_bounds = (thetas[0], thetas[-1])
+        NUM_PARTICLE_DUMPS = NUM_PARTICLE_DUMPS or len(dumps)
 
         # Collect together MUSIC and particle dumps
         hydro_and_particle_data = pmp.SynchedHydroAndParticleData(hydro_data=vels, particle_seq=dumps) 
@@ -69,14 +84,9 @@ class ParticleMovie(AnalysisTask):
         theta_range = theta_bounds[1] - theta_bounds[0]
         filter_spokes = np.fmod(init_thetas, SPOKE_SPACING) < THETA_EPSILON # bool array to filter particles along spokes
         filter_conv = self.is_in_convective_zone(init_radii) # bool array to filter particles in the convective zone
-        gids_conv = first_df[np.logical_and(filter_spokes, filter_conv)].index # GIDs of the particles in the convective zone
-        gids_rad = first_df[np.logical_and(filter_spokes, ~filter_conv)].index # GIDs of the particles in the radiative zone
-
-        # Limit the number of tracer particles to highlight
-        num_spokes = int(theta_range / SPOKE_SPACING)
-        # gids_conv = gids_conv[:min(NUM_PARTICLES_IN_SPOKE * num_spokes, len(gids_conv))]
+        gids_conv = first_df[np.logical_and.reduce((filter_spokes, filter_conv))].index # GIDs of the particles in the convective zone
+        gids_rad = first_df[np.logical_and.reduce((filter_spokes, ~filter_conv))].index # GIDs of the particles in the radiative zone
         logger.info(f"Chosen {len(gids_conv)} particles in convective zone")
-        # gids_rad = gids_rad[:min(NUM_PARTICLES_IN_SPOKE * num_spokes, len(gids_rad))]
         logger.info(f"Chosen {len(gids_rad)} particles in radiative zone")
 
         # Compute the colorbar range
@@ -110,20 +120,23 @@ class ParticleMovie(AnalysisTask):
                     ),
                     Spherical2DParticlesPlot( # particles in the convective region
                         pmp.DumpFilteredByGids(
-                            particles, gids=gids_conv
+                            particles, gids=np.intersect1d(gids_conv, get_visible_gids(particles))
                         ),
                         color=lambda _: "black",
                         scale=lambda _: 2.0,
                     ),
                     Spherical2DParticlesPlot( # particles in the radiative region
                         pmp.DumpFilteredByGids(
-                            particles, gids=gids_rad
+                            particles, gids=np.intersect1d(gids_rad, get_visible_gids(particles))
                         ),
-                        color=lambda _: "black",
-                        scale=lambda _: 2.0,
+                        color=lambda _: "lime",
+                        scale=lambda _: 3.0,
                     ),
                     Spherical2DArrayPlot( # The hydro field
-                        hydro,
+                        # Limit to specified domain
+                        (hydro
+                            .take(radii[np.logical_and(radii > r_bounds[0], radii < r_bounds[1])], "x1")
+                            .take(thetas[np.logical_and(thetas > theta_bounds[0], thetas < theta_bounds[1])], "x2")),
                         cmap="bwr",
                         with_colorbar=True,
                         color_bounds=color_bounds,
