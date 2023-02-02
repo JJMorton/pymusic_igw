@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # The hydro field to plot
 FIELD:str = "vel_1"
 # The number of particle dumps to animate, set to zero to use all dumps
-NUM_PARTICLE_DUMPS:int = 200
+NUM_PARTICLE_DUMPS:int = 0
 # The limits of the domain in r (stellar radii), use (None, None) for entire domain
 # DOMAIN_R:Tuple[float, float] = (0.23, 0.33)
 DOMAIN_R:Tuple[float, float] = (None, None)
@@ -120,15 +120,17 @@ class ParticleMovie(AnalysisTask):
         elif PARTICLE_SELECTION == "penetrating":
             # Get the GIDs of particles that penetrate the convective-radiative interface
             logger.info("Selecting particles which penetrate the boundary...")
-            filter_conv = self.is_in_convective_zone(init_radii) # bool array to filter particles in the convective zone
             last_df = hydro_and_particle_data[-1][2].dataframe()
-            end_radii = np.array(last_df["x1"])
-            filter_rad_end = ~self.is_in_convective_zone(end_radii)
-            filter_overshoot_end = ~np.logical_or.reduce(( # Filter for particles that are not in the overshoot region
-                self.is_in_convective_zone(end_radii - self.params.l_max_heatflux),
-                self.is_in_convective_zone(end_radii + self.params.l_max_heatflux)
-            ))
-            particle_gids = first_df[np.logical_and.reduce((filter_conv, filter_rad_end, filter_overshoot_end))].index
+            filter_start = self.is_in_convective_zone(init_radii) # bool array to filter particles in the convective zone
+            filter_end = ~self.is_in_convective_zone(last_df["x1"]) # bool array to filter particles in the convective zone
+            gids_start = np.array(first_df[filter_start].index.astype(int))
+            gids_end = np.array(last_df[filter_end].index.astype(int))
+            # Find all the particles that penetrate at some point
+            # for _, _, particles in hydro_and_particle_data:
+            #     df = particles.dataframe()
+            #     gids = df[~self.is_in_convective_zone(df["x1"])].index.astype(int)
+            #     gids_end = np.unique(np.concatenate((gids_end, gids)))
+            particle_gids = np.intersect1d(gids_start, gids_end)
             particle_colors = np.array(["black"] * len(particle_gids))
             logger.info(f"Selected {len(particle_gids)} particles")
         else:
