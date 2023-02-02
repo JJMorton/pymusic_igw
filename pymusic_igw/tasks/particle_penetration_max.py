@@ -58,7 +58,7 @@ class ParticlePenetration(AnalysisTask):
         ax.axvline(self.params.l_max_heatflux / self.params.radius, ls="--", label=r"$l_{\rm max}(\mathbf{f}_{\delta T})$")
         ax.axvline(self.params.l_max_ekinflux / self.params.radius, ls="-.", label=r"$l_{\rm max}(\mathbf{f}_k)$")
         ax.legend()
-        ax.set_xlabel("Maximum penetration (solar radii)")
+        ax.set_xlabel("Maximum penetration (stellar radii)")
         ax.set_ylabel("Frequency")
         ax.set_yticks([])
         ax.set_yticklabels([])
