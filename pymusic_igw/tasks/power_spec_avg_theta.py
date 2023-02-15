@@ -40,8 +40,10 @@ class PowerSpecAvgTheta(AnalysisTask):
                 "time",
                 "freq",
             )
+            .abs2()
             .collapse(self.quad.average, "x2")
             .slabbed("x1", 256)
+            .sqrt()
             .scaled(1.0 / (4 * np.pi))
         )
 
