@@ -13,7 +13,6 @@ from dataclasses import dataclass
 
 from pymusic.big_array import BigArray
 from pymusic.io.music import ArrayBC, MusicSim
-from pymusic.io.music_new_format import MusicDumpInfo
 from pymusic.math import SphericalMidpointQuad1D
 from pymusic.io.music import ReflectiveArrayBC, PeriodicArrayBC
 
@@ -177,9 +176,10 @@ class AnalysisTask(ABC):
 
 		# Setup simulation from dump files
 		logger.info(f"Reading {len(dump_files)} dump files...")
-		self.dump_info = MusicDumpInfo(num_scalars=0, num_space_dims=2, num_velocities=2)
 		self.dump_files = sorted(dump_files)
-		self.sim = MusicSim.from_dump_file_names(dump_files, self.dump_info, self.params.boundary_conds)
+		self.sim = MusicSim.from_dump_file_names(dump_files, self.params.boundary_conds)
+		# self.dump_info = MusicDumpInfo(num_scalars=0, num_space_dims=2, num_velocities=2)
+		# self.sim = MusicSim.from_dump_file_names(dump_files, self.dump_info, self.params.boundary_conds)
 		self.sim_data = self.sim.big_array(verbose=self.verbose)
 		self.quad = SphericalMidpointQuad1D(self.sim.point_grid(axis=1))
 		logger.info("Done!")
