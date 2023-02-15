@@ -12,7 +12,7 @@ from pymusic.big_array import TimedArray
 from pymusic.big_array import SphHarm1DArray
 from pymusic.big_array import FFTPowerSpectrumArray
 
-from analysis_task import AnalysisTask
+from pymusic_igw import AnalysisTask
 
 
 # Set up logging
@@ -27,7 +27,6 @@ class PowerSpec(AnalysisTask):
     def compute(self):
         logger.info("Setting up power spectrum pipeline")
         ells = [2, 3, 4, 7]
-        radii = [0.4 * self.params.radius,]
         field = "vel_1"
         dt = np.mean(np.diff(np.array(self.sim_data.labels_along_axis("time"))))
         fft = NuFFT1D(window=BlackmanWindow(), sampling_period=dt, spacing_tol=0.07)
@@ -50,6 +49,8 @@ class PowerSpec(AnalysisTask):
 
         # Find the radii in the grid that are closest to the requested radii
         all_radii = np.array(self.sim_data.labels_along_axis("x1"))
+        radii = [0.5 * (self.params.boundary_conv + all_radii[-1])]
+        logger.info(f"Selecting radii {radii}")
         radii = [all_radii[np.abs(all_radii - r).argmin()] for r in radii]
 
         # spec_selected is of shape (omega, len(radii), len(ells))

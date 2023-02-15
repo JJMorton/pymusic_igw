@@ -58,7 +58,7 @@ class Params():
 
 		Rsun = 6.957e8
 		Msun = 1.98847e30
-		print("PARAMS: M={:.2f}M_sun R={:.2f}R_sun boundary_conv={:.3f}R convective-{} tau_conv={:.2E}s BC=({})".format(
+		logger.info("PARAMS: M={:.2f}M_sun R={:.2f}R_sun boundary_conv={:.3f}R convective-{} tau_conv={:.2E}s BC=({})".format(
 			p.mass / Msun,
 			p.radius / Rsun,
 			p.boundary_conv / p.radius,
