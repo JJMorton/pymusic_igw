@@ -60,8 +60,8 @@ class ParticlePenetration(AnalysisTask):
         ax.legend()
         ax.set_xlabel("Maximum penetration (stellar radii)")
         ax.set_ylabel("Frequency")
-        ax.set_yticks([])
-        ax.set_yticklabels([])
+        # ax.set_yticks([])
+        # ax.set_yticklabels([])
         fig.tight_layout()
         return fig
 

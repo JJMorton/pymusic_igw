@@ -90,6 +90,7 @@ class ParticleMeanVariance(AnalysisTask):
             ax.axvline((self.params.l_max_ekinflux + self.params.boundary_conv) / self.params.radius,
                 ls="-.", label=r"$l_{\rm max}(\mathbf{f}_k)$", lw=1, c="black")
             ax.legend()
+        ax_mean.axhline(self.params.boundary_conv / self.params.radius, ls="-", lw=1, c="black")
         ax_mean.set_xlabel("Initial radius")
         ax_mean.set_ylabel("Mean radius")
         ax_var.set_xlabel("Initial radius")
