@@ -4,6 +4,7 @@ from os import path
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
+import matplotlib
 
 from pymusic.spec import SphericalHarmonicsTransform1D
 from pymusic.spec import NuFFT1D
@@ -56,11 +57,26 @@ class PowerSpecAvgTheta(AnalysisTask):
     def plot(self, result):
         field, radii, freqs, spec = result
 
-        # Make the plots
+
+        # # Plot single frequencies
+        # selected_freqs = np.array([0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4]) * 1e-6
+        # idx = [np.abs(freqs - f).argmin() for f in selected_freqs]
+        # fig = plt.figure()
+        # fig.suptitle(f"Power Spectrum for Field '{field}'")
+        # ax = fig.add_subplot(1, 1, 1)
+        # for i in idx:
+        #     ax.plot(radii, spec[i], label=r"$\omega = {:.2E}\mu \rm Hz$".format(freqs[i] * 1e6))
+        # ax.set_xlabel(r"$r$")
+        # ax.set_ylabel(r"$P[v_r]$")
+        # fig.legend()
+        # ax.set_yscale("log")
+
+        # Plot a colourplot of every frequency
         fig = plt.figure()
         fig.suptitle(f"Power Spectrum for Field '{field}'")
         ax = fig.add_subplot(1, 1, 1)
-        ax.pcolormesh(radii, freqs*1e6, spec, cmap='inferno')
+        mesh = ax.pcolormesh(radii, freqs*1e6, spec, cmap='inferno', norm=matplotlib.colors.LogNorm())
+        fig.colorbar(mesh)
         ax.set_xlabel(r"$r$")
         ax.set_ylabel(r"$\omega$")
 
