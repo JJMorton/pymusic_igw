@@ -71,10 +71,10 @@ class PowerSpecOmegaEll(AnalysisTask):
         for i, radius in enumerate(radii):
             spec_r = spec[:, i, :]
             ax = fig.add_subplot(numrows, numcols, i + 1)
-            mesh = ax.pcolormesh(ells, freqs*1e6, spec_r, cmap='inferno', norm=matplotlib.colors.LogNorm())
+            mesh = ax.pcolormesh(ells, freqs*1e6, spec_r, cmap='CMRmap', norm=matplotlib.colors.LogNorm())
             fig.colorbar(mesh)
             ax.set_xlabel(r"$\ell$")
-            ax.set_ylabel(r"$\omega$")
+            ax.set_ylabel(r"$\omega$ ($\mu$Hz)")
             ax.set_title(r"$r = {:.2f}$".format(radius / self.params.radius))
 
         fig.tight_layout(rect=[0, 0.02, 1, 0.98])
