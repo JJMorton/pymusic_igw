@@ -10,6 +10,7 @@ import json
 from numpy import float64
 from numpy.typing import NDArray
 from dataclasses import dataclass
+import numpy as np
 
 from pymusic.big_array import BigArray
 from pymusic.io.music import ArrayBC, MusicSim
@@ -85,6 +86,8 @@ class AnalysisTask(ABC):
 	quad: SphericalMidpointQuad1D
 	params: Params
 	base_dir: str = "./"
+	domain_r: Tuple[float, float]
+	domain_theta: Tuple[float, float]
 
 
 	def __init__(self, name: str, plot_ext: str = "png"):
@@ -100,6 +103,11 @@ class AnalysisTask(ABC):
 	@abstractmethod
 	def plot(self, result: Any) -> plt.Figure:
 		pass
+
+
+	@property
+	def is_wedge(self) -> bool:
+		return np.abs((self.domain_theta[1] - self.domain_theta[0]) - np.pi) > 1e-6
 
 
 	def run(self):
@@ -185,6 +193,10 @@ class AnalysisTask(ABC):
 		logger.info("Done!")
 		logger.info(f"sim_data: {self.sim_data}")
 		logger.info(f"Fields available under the 'var' axis: {self.sim_data.labels_along_axis('var')}")
+
+		self.domain_r = self.sim.grid.grids[0].bounds()
+		self.domain_theta = self.sim.grid.grids[1].bounds()
+		logger.info(f"This is a {'WEDGE' if self.is_wedge else 'FULL HEMISPHERE'} simulation")
 
 		file_path = self._get_result_path()
 		logger.info(f"Will save analysis result to '{file_path}'")

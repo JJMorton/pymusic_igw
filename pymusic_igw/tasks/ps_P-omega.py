@@ -5,14 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
-from pymusic.spec import SphericalHarmonicsTransform1D
-from pymusic.spec import NuFFT1D
-from pymusic.spec import BlackmanWindow
+from pymusic.spec import NuFFT1D, BlackmanWindow, WedgeBCs
 from pymusic.big_array import TimedArray
-from pymusic.big_array import SphHarm1DArray
 from pymusic.big_array import FFTPowerSpectrumArray
 
-from pymusic_igw import AnalysisTask
+from pymusic_igw import AnalysisTask, autoHarm1DArray
 
 
 # Set up logging
@@ -30,15 +27,13 @@ class PowerSpec(AnalysisTask):
         field = "vel_1"
         dt = np.mean(np.diff(np.array(self.sim_data.labels_along_axis("time"))))
         fft = NuFFT1D(window=BlackmanWindow(), sampling_period=dt, spacing_tol=0.07)
-        sh_xform = SphericalHarmonicsTransform1D(self.quad, ell_max=max(ells))
         spec = TimedArray(FFTPowerSpectrumArray(
-            SphHarm1DArray(
+            autoHarm1DArray(
+                self,
                 self.sim_data.xs(field, axis="var"),
-                sh_xform,
-                theta_axis="x2",
-                ell_axis="ell",
-                ells=ells,
-                ),
+                max_ell=200,
+                wedge_bc=WedgeBCs.ZERO_DERIVATIVE
+            ),
             fft,
             "time",
             "freq",
