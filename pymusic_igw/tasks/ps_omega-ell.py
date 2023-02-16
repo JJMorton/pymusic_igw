@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class PowerSpecOmegaEll(AnalysisTask):
 
     def __init__(self):
-        super().__init__("power_spec_wedge")
+        super().__init__("ps_omega-ell")
 
     def compute(self):
         logger.info("Setting up power spectrum pipeline")

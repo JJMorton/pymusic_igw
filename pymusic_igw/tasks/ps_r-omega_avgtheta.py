@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class PowerSpecAvgTheta(AnalysisTask):
 
     def __init__(self):
-        super().__init__("power_spec_avg_theta")
+        super().__init__("ps_r-omega_avgtheta")
 
     def compute(self):
         field = "vel_1"
