@@ -45,6 +45,7 @@ class PowerSpecWedge(AnalysisTask):
         ))
 
         ells = np.array(spec.labels_along_axis("ell"))
+        ells = ells[ells <= 200]
         freqs = np.array(spec.labels_along_axis("freq"))
 
         # Take equally spaced radii through radiative zone
@@ -55,7 +56,7 @@ class PowerSpecWedge(AnalysisTask):
 
         # spec_selected is of shape (omega, len(radii), len(ells))
         logger.info("Computing selected power spectra")
-        spec_selected = spec.take(radii, "x1").array()
+        spec_selected = spec.take(radii, "x1").take(ells, "ell").array()
 
         return (field, radii, ells, freqs, spec_selected)
 
@@ -78,7 +79,7 @@ class PowerSpecWedge(AnalysisTask):
             fig.colorbar(mesh)
             ax.set_xlabel(r"$\ell$")
             ax.set_ylabel(r"$\omega$")
-            ax.set_title(r"$r = {}$".format(radius))
+            ax.set_title(r"$r = {:.2f}$".format(radius / self.params.radius))
 
         fig.tight_layout(rect=[0, 0.02, 1, 0.98])
         return fig
