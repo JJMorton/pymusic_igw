@@ -45,10 +45,10 @@ class PowerSpecOmegaEll(AnalysisTask):
         freqs = np.array(spec.labels_along_axis("freq"))
 
         # Take equally spaced radii through radiative zone
-        all_radii = np.array(self.sim_data.labels_along_axis("x1"))
-        radii = np.arange(0.1, 1.0, 0.1) * (all_radii[-1] - self.params.boundary_conv) + self.params.boundary_conv
+        radii = np.array(self.sim_data.labels_along_axis("x1"))
+        wanted_radii = np.arange(0.1, 1.0, 0.1) * (radii[-1] - self.params.boundary_conv) + self.params.boundary_conv
         logger.info(f"Selecting radii {radii}")
-        radii = np.array([all_radii[np.abs(all_radii - r).argmin()] for r in radii])
+        radii = np.array([radii[np.abs(radii - r).argmin()] for r in wanted_radii])
 
         # spec_selected is of shape (omega, len(radii), len(ells))
         logger.info("Computing selected power spectra")
@@ -71,7 +71,7 @@ class PowerSpecOmegaEll(AnalysisTask):
         for i, radius in enumerate(radii):
             spec_r = spec[:, i, :]
             ax = fig.add_subplot(numrows, numcols, i + 1)
-            mesh = ax.pcolormesh(ells, freqs*1e6, spec_r, cmap='CMRmap', norm=matplotlib.colors.LogNorm())
+            mesh = ax.pcolormesh(ells, freqs*1e6, spec_r, cmap='cubehelix', norm=matplotlib.colors.LogNorm())
             fig.colorbar(mesh)
             ax.set_xlabel(r"$\ell$")
             ax.set_ylabel(r"$\omega$ ($\mu$Hz)")
