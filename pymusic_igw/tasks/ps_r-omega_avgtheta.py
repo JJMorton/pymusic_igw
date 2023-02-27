@@ -98,7 +98,7 @@ class PowerSpecAvgTheta(AnalysisTask):
         ax = fig.add_subplot(1, 1, 1)
         for spec_r, r in zip(spec, radii):
             ax.plot(freqs*1e6, spec_r, c=col(norm(r)), label=r"$r = {:.3f}R_*$".format(r/self.params.radius))
-        ax.set_xlim(left=freqs[1] * 1e6, right=0.5/1e3 * 1e6)
+        ax.set_xlim(left=3e-2, right=0.5/1e3 * 1e6)
         ax.set_ylim(top=1e11, bottom=1e-5)
         ax.set_xlabel(r"$\omega$ ($\mu$Hz)")
         ax.set_ylabel(r"$P[v_r]$")

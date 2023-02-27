@@ -31,7 +31,7 @@ class PowerSpec(AnalysisTask):
             autoHarm1DArray(
                 self,
                 self.sim_data.xs(field, axis="var"),
-                max_ell=200,
+                max_ell=max(ells),
                 wedge_bc=WedgeBCs.ZERO_DERIVATIVE
             ),
             fft,
