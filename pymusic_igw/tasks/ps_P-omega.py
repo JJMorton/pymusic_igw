@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class PowerSpec(AnalysisTask):
+    '''
+    A line plot of the power spectrum of the radial velocity at fixed radii and ells.
+    Plotted against frequency.
+    Makes multiple plots, one for each selected ell, and each with the range of selected radii.
+    '''
 
     def __init__(self):
         super().__init__("ps_P-omega")

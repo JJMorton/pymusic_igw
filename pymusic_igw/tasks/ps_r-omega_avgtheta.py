@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 class PowerSpecAvgTheta(AnalysisTask):
+    '''
+    A colourplot of the power spectrum of the radial velocity, averaged over theta (summed over ell).
+    Plotted against omega and r.
+    '''
 
     def __init__(self):
         super().__init__("ps_r-omega_avgtheta")

@@ -21,6 +21,11 @@ def nearest_to(arr, values):
 
 
 class PowerSpecEll(AnalysisTask):
+	'''
+	A line plot of the power spectrum of the radial velocity at fixed radii and frequencies.
+	Plotted against ell.
+	Makes multiple plots, one for each selected radius, and each with the range of selected frequencies.
+	'''
 
 	def __init__(self):
 		super().__init__("ps_P-ell")
@@ -76,7 +81,7 @@ class PowerSpecEll(AnalysisTask):
 		fig, axes = plt.subplots(len(radii), 1, figsize=(5, 4 * len(radii)))
 		for ax, r, spec_r in zip(axes, radii, spec):
 			for freq, spec_r_omega in zip(freqs, spec_r):
-				ax.plot(ells, spec_r_omega, c=col(norm(freq)), label=r"$\omega = {:.1f}\mu$Hz".format(freq * 1e6))
+				ax.plot(ells[1:], spec_r_omega[1:], c=col(norm(freq)), label=r"$\omega = {:.1f}\mu$Hz".format(freq * 1e6))
 			ax.set_title(r"$r = {:.3f}R_*$".format(r/self.params.radius))
 			ax.set_ylim(top=1e11, bottom=1e-5)
 			ax.set_xlabel(r"$\ell$")

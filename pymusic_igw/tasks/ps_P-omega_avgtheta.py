@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class PowerSpecAvgTheta(AnalysisTask):
+    '''
+    A line plot of the power spectrum of the radial velocity at fixed radii and averaged over theta (sum over all ells).
+    Plotted against frequency.
+   	Plots a line for each selected radius.
+    '''
 
     def __init__(self):
         super().__init__("ps_r-omega_avgtheta")

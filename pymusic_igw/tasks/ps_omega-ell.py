@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 class PowerSpecOmegaEll(AnalysisTask):
+    '''
+    A colourplot of the power spectrum of the radial velocity at a fixed radius.
+    Plotted against omega and ell.
+    Makes multiple plots, one for each selected radius.
+    '''
 
     def __init__(self):
         super().__init__("ps_omega-ell")
