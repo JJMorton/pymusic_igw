@@ -44,7 +44,7 @@ class PowerSpec(AnalysisTask):
         field = "vel_1"
         dt = np.mean(np.diff(np.array(self.sim_data.labels_along_axis("time"))))
         fft = NuFFT1D(window=BlackmanWindow(), sampling_period=dt, spacing_tol=0.07)
-        is_periodic = self.params.boundary_conds[1] == PeriodicArrayBC
+        is_periodic = type(self.params.boundary_conds[1]) == PeriodicArrayBC
         logger.info(f"is_periodic={is_periodic}")
         spec = TimedArray(FFTPowerSpectrumArray(
             autoHarm1DArray(
