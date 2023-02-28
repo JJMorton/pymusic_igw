@@ -5,6 +5,7 @@ import matplotlib
 import numpy as np
 import logging
 from typing import Sequence
+from pymusic.io.music import PeriodicArrayBC
 
 from pymusic.spec import NuFFT1D, BlackmanWindow, WedgeBCs
 from pymusic.big_array import TimedArray, BigArray, FFTPowerSpectrumArray
@@ -42,12 +43,14 @@ class PowerSpecEll(AnalysisTask):
 		field = "vel_1"
 		dt = np.mean(np.diff(np.array(self.sim_data.labels_along_axis("time"))))
 		fft = NuFFT1D(window=BlackmanWindow(), sampling_period=dt, spacing_tol=0.07)
+		is_periodic = self.params.boundary_conds[1] == PeriodicArrayBC
+		logger.info(f"is_periodic={is_periodic}")
 		spec = TimedArray(FFTPowerSpectrumArray(
 			autoHarm1DArray(
 				self,
 				self.sim_data.xs(field, axis="var"),
 				max_ell=200,
-				wedge_bc=WedgeBCs.ZERO_DERIVATIVE # Change to PERIODIC if necessary
+				wedge_bc=WedgeBCs.PERIODIC if is_periodic else WedgeBCs.ZERO_DERIVATIVE
 			),
 			fft,
 			"time",
