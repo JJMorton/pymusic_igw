@@ -25,7 +25,7 @@ def nearest_to(arr: BigArray, field: str, values: Sequence):
     axis = np.array(arr.labels_along_axis(field))
     axis_nearest = np.array([axis[np.abs(axis - val).argmin()] for val in values])
     logger.info(f"Found values of {axis_nearest} in {field}")
-    return axis
+    return axis_nearest
 
 
 class PowerSpec(AnalysisTask):
