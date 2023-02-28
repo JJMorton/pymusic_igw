@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import logging
+from typing import Sequence
 
 from pymusic.spec import NuFFT1D, BlackmanWindow, WedgeBCs
-from pymusic.big_array import TimedArray
-from pymusic.big_array import FFTPowerSpectrumArray
+from pymusic.big_array import TimedArray, BigArray, FFTPowerSpectrumArray
 
 from pymusic_igw import AnalysisTask, autoHarm1DArray
 
@@ -16,8 +16,15 @@ from pymusic_igw import AnalysisTask, autoHarm1DArray
 logger = logging.getLogger(__name__)
 
 
-def nearest_to(arr, values):
-	return np.array([arr[np.abs(arr - val).argmin()] for val in values])
+def nearest_to(arr: BigArray, field: str, values: Sequence):
+	'''
+	Find the grid points in the scale of `field` that are closest to the requested values
+	'''
+	logger.info(f"Looking for values of {values} in {field}")
+	axis = np.array(arr.labels_along_axis(field))
+	axis_nearest = np.array([axis[np.abs(axis - val).argmin()] for val in values])
+	logger.info(f"Found values of {axis_nearest} in {field}")
+	return axis
 
 
 class PowerSpecEll(AnalysisTask):
@@ -51,18 +58,12 @@ class PowerSpecEll(AnalysisTask):
 		freqs = spec.labels_along_axis("freq")
 
 		# Find the radii in the grid that are closest to the requested radii
-		radii = np.array(spec.labels_along_axis("x1"))
 		wanted_radii = np.arange(self.params.boundary_conv, 0.38 * self.params.radius, 0.02 * self.params.radius)
-		logger.info(f"Selecting radii {wanted_radii}")
-		radii = nearest_to(radii, wanted_radii)
-		logger.info(f"Found radii {radii}")
+		radii = nearest_to(spec, "x1", wanted_radii)
 
 		# Do the same for the requested frequencies
-		freqs = np.array(spec.labels_along_axis("freq"))
 		wanted_freqs = np.array([1e-6, 2e-6, 4e-6, 10e-6, 20e-6, 50e-6])
-		logger.info(f"Selecting freqs {wanted_freqs}")
-		freqs = nearest_to(freqs, wanted_freqs)
-		logger.info(f"Found freqs {freqs}")
+		freqs = nearest_to(spec, "freq", wanted_freqs)
 
 		# spec_selected is of shape (freqs, len(radii), len(ells))
 		logger.info("Computing selected power spectra")

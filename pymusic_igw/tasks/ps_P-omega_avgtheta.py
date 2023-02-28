@@ -28,7 +28,7 @@ class PowerSpecAvgTheta(AnalysisTask):
     '''
 
     def __init__(self):
-        super().__init__("ps_r-omega_avgtheta")
+        super().__init__("ps_P-omega_avgtheta")
 
     def compute(self):
         field = "vel_1"

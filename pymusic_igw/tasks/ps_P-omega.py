@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
 
 from os import path
+from typing import Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
 from pymusic.spec import NuFFT1D, BlackmanWindow, WedgeBCs
-from pymusic.big_array import TimedArray
-from pymusic.big_array import FFTPowerSpectrumArray
+from pymusic.big_array import TimedArray, BigArray, FFTPowerSpectrumArray
 
 from pymusic_igw import AnalysisTask, autoHarm1DArray
 
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+def nearest_to(arr: BigArray, field: str, values: Sequence):
+    '''
+    Find the grid points in the scale of `field` that are closest to the requested values
+    '''
+    logger.info(f"Looking for values of {values} in {field}")
+    axis = np.array(arr.labels_along_axis(field))
+    axis_nearest = np.array([axis[np.abs(axis - val).argmin()] for val in values])
+    logger.info(f"Found values of {axis_nearest} in {field}")
+    return axis
 
 
 class PowerSpec(AnalysisTask):
@@ -36,7 +47,7 @@ class PowerSpec(AnalysisTask):
             autoHarm1DArray(
                 self,
                 self.sim_data.xs(field, axis="var"),
-                max_ell=max(ells),
+                max_ell=max(ells) + 1,
                 wedge_bc=WedgeBCs.ZERO_DERIVATIVE
             ),
             fft,
@@ -48,10 +59,11 @@ class PowerSpec(AnalysisTask):
         freqs = spec.labels_along_axis("freq")
 
         # Find the radii in the grid that are closest to the requested radii
-        all_radii = np.array(self.sim_data.labels_along_axis("x1"))
-        radii = [0.5 * (self.params.boundary_conv + all_radii[-1])]
-        logger.info(f"Selecting radii {radii}")
-        radii = [all_radii[np.abs(all_radii - r).argmin()] for r in radii]
+        wanted_radii = np.arange(self.params.boundary_conv, 0.38 * self.params.radius, 0.02 * self.params.radius)
+        radii = nearest_to(spec, "x1", wanted_radii)
+
+        # Do the same for ell
+        ells = nearest_to(spec, "ell", ells)
 
         # spec_selected is of shape (omega, len(radii), len(ells))
         logger.info("Computing selected power spectra")
