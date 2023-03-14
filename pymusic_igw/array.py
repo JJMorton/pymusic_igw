@@ -1,7 +1,7 @@
 from pathlib import Path
 import warnings
 import numpy as np
-from pymusic.big_array import BigArray, IndexNd, StackedArray, SummedArray, cached_property
+from pymusic.big_array import BigArray, IndexNd, StackedArray, SummedArray, TakeArray, cached_property
 import h5py as h5
 import logging
 
@@ -138,10 +138,13 @@ class TakeClosestArray(BigArray):
 
 
 class HDF5Array(BigArray):
+    """
+    Evaluates the array in its entirety, and saves to disk as a HDF5 file, complete with axes
+    """
 
     def __init__(self, array: BigArray, path: Path):
         self._array = array
-        self._path = path
+        self._path = Path(path)
 
         self._saved = False
 
@@ -156,14 +159,20 @@ class HDF5Array(BigArray):
             logger.info(f"Renamed '{self._path.as_posix()}' to '{p.as_posix()}' to avoid overwriting")
 
     def sum(self, axis: str) -> BigArray:
-        return self._array.sum(axis)
+        return SummedArray(self, axis)
+        # return self._array.sum(axis)
 
     def take(self, labels: Sequence[object], axis: str) -> BigArray:
-        return self._array.take(labels, axis)
+        return TakeArray(self, labels, axis)
+        # return self._array.take(labels, axis)
+
+    def _index(self) -> IndexNd:
+        return self._array.index
 
     def array(self) -> NDArray:
         logger.info(f"Will compute array and save to '{self._path.as_posix()}'")
         arr = self._array.array()
+        print(arr.shape)
         logger.info(f"Opening '{self._path.as_posix()}' for writing")
         with h5.File(self._path, "w") as f:
             dset = f.create_dataset("array", data=arr)
@@ -171,6 +180,7 @@ class HDF5Array(BigArray):
                 scale = f.create_dataset(axis, data=self.labels_along_axis(axis))
                 scale.make_scale(axis)
                 dset.dims[i].attach_scale(scale)
+                print(i, axis, len(self.labels_along_axis(axis)), scale)
         self._saved = True
         logger.info(f"Written array to '{self._path.as_posix()}'")
 
